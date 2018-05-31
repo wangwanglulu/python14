@@ -1,20 +1,2118 @@
 <!doctype html>
-<title>Site Maintenance</title>
-<style>
-  body { text-align: center; padding: 50px; background-color: white;}
-  h1 { font-size: 50px; text-align: center;}
-  img {}
-  body { font: 20px Helvetica, sans-serif; color: #333; }
-  article { display: block; text-align: left; width: 1200px; margin: 0 auto; }
-  a { color: #dc8100; text-decoration: none; }
-  a:hover { color: #333; text-decoration: none; }
-</style>
+<html>
 
-<article>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lecture 14</title>
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/white.css">
+    <link rel="stylesheet" href="css/theme/custom.css">
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+    <!-- Printing and PDF exports -->
+    <script>
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
+    document.getElementsByTagName('head')[0].appendChild(link);
+    </script>
+</head>
 
-    <div vertical-align="middle">
-        <h1>COMING SOON</h1>
-        <img src="./bg.jpg" width="100%" alt="">
-        
+<body>
+    <div class="reveal" style="background-color: #fff;">
+        <div class="slides">
+            <section data-background-video="bgm.mp4" data-background-video-loop data-background-video-muted style="text-align: left;">
+                <h2 style="color: white">Python Programming</h2>
+                <h5 style="color: white">Lecture 14 Data Cleaning</h5>
+            </section>
+            <section>
+                <section data-background="#2980b9" style="color: white">
+                    <h2 style="color: white">14.1 Handling Missing Data</h2>
+                </section>
+                <section>
+                    <ul>
+                        <li class="fragment">
+                            <p>During the course of doing data analysis and modeling, a significant amount of time is spent on data preparation: loading, cleaning, transforming, and rearranging. Such tasks are often reported to take up 80% or more of an analyst's time.</p>
+                        </li>
+                        <li class="fragment">
+                            <p>In pandas, we've adopted a convention used in the R programming language by referring to missing data as NA, which stands for not available. In statistics applications, NA data may either be data that does not exist or that exists but was not observed.</p>
+                        </li>
+                        <li class="fragment">
+                            <p>When cleaning up data for analysis, it is often important to do analysis on the missing data itself to identify data collection problems or potential biases in the data caused by missing data.</p>
+                        </li>
+                    </ul>
+                </section>
+                <section>
+                    <h6>Filtering Out Missing Data</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [15]: from numpy import nan as NA
+In [16]: data = pd.Series([1, NA, 3.5, NA, 7])
+In [17]: data.dropna()
+Out[17]:
+0 1.0
+2 3.5
+4 7.0
+dtype: float64
+</code></pre>
+                    </div>
+                    <p class="fragment">This is equivalent to:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [18]: data[data.notnull()]
+Out[18]:
+0 1.0
+2 3.5
+4 7.0
+dtype: float64
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">With DataFrame objects, things are a bit more complex. You may want to drop rows or columns that are all NA or only those containing any NAs. dropna by default drops any row containing a missing value:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [19]: data = pd.DataFrame([[1., 6.5, 3.], [1., NA, NA],
+....:                         [NA, NA, NA], [NA, 6.5, 3.]])
+In [20]: cleaned = data.dropna()
+
+In [21]: data
+Out[21]:
+    0   1   2
+0 1.0 6.5 3.0
+1 1.0 NaN NaN
+2 NaN NaN NaN
+3 NaN 6.5 3.0
+
+In [22]: cleaned
+Out[22]:
+    0   1   2
+0 1.0 6.5 3.0
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [23]: data.dropna(how='all') 
+#Passing how='all' will only drop rows that are all NA
+Out[23]:
+    0   1   2
+0 1.0 6.5 3.0
+1 1.0 NaN NaN
+3 NaN 6.5 3.0
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">To drop columns in the same way, pass axis=1:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [24]: data[4] = NA
+In [25]: data
+Out[25]:
+    0   1   2   4
+0 1.0 6.5 3.0 NaN
+1 1.0 NaN NaN NaN
+2 NaN NaN NaN NaN
+3 NaN 6.5 3.0 NaN
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [26]: data.dropna(axis=1, how='all')
+Out[26]:
+    0   1   2
+0 1.0 6.5 3.0
+1 1.0 NaN NaN
+2 NaN NaN NaN
+3 NaN 6.5 3.0
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">You can indicate this with the thresh argument:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [30]: df
+Out[30]:
+          0         1         2
+0  1.129351       NaN       NaN
+1  0.571598       NaN       NaN
+2  0.439363       NaN -1.255502
+3 -0.154283       NaN -0.113689
+4 -2.825903  0.075932 -1.948724
+5 -1.912896 -0.137668  0.930477
+6  0.440831 -0.595723  0.533616
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [31]: df.dropna()
+Out[31]:
+          0         1         2
+4  0.316415  0.017892 -1.152744
+5 -0.476259  0.003358 -1.600740
+6  1.283904  0.356927  0.834054
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [32]: df.dropna(thresh=2)
+Out[32]:
+          0         1         2
+2 -0.366989       NaN -0.885120
+3  1.470782       NaN  1.147080
+4  1.007768  0.237312 -0.794707
+5 -1.078205  0.190628 -0.514295
+6  1.061783 -1.431051  0.681682
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h6>Filling In Missing Data</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [33]: df.fillna(0)
+Out[33]:
+          0         1         2
+0 -0.444011  0.000000  0.000000
+1  0.273804  0.000000  0.000000
+2  0.408710  0.000000  1.269092
+3 -0.589805  0.000000 -0.714827
+4  0.655297  0.194195 -1.430882
+5 -1.921547 -1.885065  0.479288
+6 -0.122864 -0.147039  0.037490
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [34]: df.fillna({1: 0.5, 2: 0})
+Out[34]:
+          0         1         2
+0 -0.663867  0.500000  0.000000
+1 -2.095048  0.500000  0.000000
+2 -1.072337  0.500000  0.434910
+3 -1.221984  0.500000 -0.099173
+4  2.033426 -1.428012 -1.634675
+5  1.105917  0.765358 -1.617980
+6 -0.282628 -0.401752 -0.364883
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">The same interpolation methods available for reindexing can be used with fillna:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+          0         1         2
+0 -0.967851  0.190472 -0.516825
+1  0.145454  0.061482 -1.743254
+2  2.146502       NaN  1.427088
+3  1.134095       NaN  1.074515
+4  0.162277       NaN       NaN
+5  0.105255       NaN       NaN
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [41]: df.fillna(method='ffill')
+Out[41]:
+          0         1         2
+0  0.153631 -0.748132  0.427905
+1 -0.240248  0.925676  0.187559
+2  0.027180  0.925676 -2.123832
+3  1.502443  0.925676 -1.937550
+4  1.564405  0.925676 -1.937550
+5 -0.442668  0.925676 -1.937550
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [42]: df.fillna(method='ffill', limit=2)
+Out[42]:
+          0         1         2
+0  2.100394  0.616406 -0.378689
+1  0.959425 -1.283852  0.200091
+2  1.128403 -1.283852  1.211466
+3  0.987276 -1.283852 -1.932885
+4 -0.318912       NaN -1.932885
+5  0.185285       NaN -1.932885
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">
+                        With fillna you can do lots of other things with a little creativity. For example, you might pass the mean or median value of a Series:
+                    </p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [43]: data = pd.Series([1., NA, 3.5, NA, 7])
+
+In [44]: data.fillna(data.mean())
+Out[44]:
+0   1.000000
+1   3.833333
+2   3.500000
+3   3.833333
+4   7.000000
+dtype: float64
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h3>Summary: Data Cleaning (1)</h3>
+                    <ul>
+                        <li class="fragement">
+                            <p>Dropping Data: .dropna(), .dropna(how='all'), .dropna(axis=1, how='all'), dropna(thresh=2)</p>
+                        </li>
+                        <li class="fragement">
+                            <p>Filling Data: fillna(0), .fillna({1: 0.5, 2: 0}), .fillna(method='ffill'), df.fillna(method='ffill', limit=2), data.fillna(data.mean())</p>
+                        </li>
+                    </ul>
+                </section>
+            </section>
+            <section>
+                <section data-background="#2980b9" style="color: white">
+                    <h2 style="color: white">14.2 Data Transformation</h2>
+                </section>
+                <section>
+                    <h6>Removing Duplicates</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [45]: data = pd.DataFrame({'k1': ['one', 'two'] * 3 + ['two'],
+....:                         'k2': [1, 1, 2, 3, 3, 4, 4]})
+In [46]: data
+Out[46]:
+    k1  k2
+0  one   1
+1  two   1
+2  one   2
+3  two   3
+4  one   3
+5  two   4
+6  two   4
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [47]: data.duplicated()
+Out[47]:
+0    False
+1    False
+2    False
+3    False
+4    False
+5    False
+6     True
+dtype: bool
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [48]: data.drop_duplicates()
+Out[48]:
+    k1  k2
+0  one   1
+1  two   1
+2  one   2
+3  two   3
+4  one   3
+5  two   4
+</code></pre>
+                    </div>
+                    <p class="fragment">You can specify any subset of them to detect duplicates.</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [49]: data['v1'] = range(7)
+In [50]: data.drop_duplicates(['k1'])
+Out[50]:
+     k1  k2  v1
+0   one   1   0
+1   two   1   1
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [51]: data.drop_duplicates(['k1', 'k2'], keep='last')
+Out[51]:
+    k1  k2  v1
+0  one   1   0
+1  two   1   1
+2  one   2   2
+3  two   3   3
+4  one   3   4
+6  two   4   6
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h6>Transforming Data Using a Function or Mapping</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [52]: data = pd.DataFrame({'food': ['bacon', 'pulled pork', 'bacon',
+....:                         'Pastrami', 'corned beef', 'Bacon',
+....:                         'pastrami', 'honey ham', 'nova lox'],
+....:                         'ounces': [4, 3, 12, 6, 7.5, 8, 3, 5, 6]})
+In [53]: data
+Out[53]:
+          food  ounces
+0        bacon     4.0
+1  pulled pork     3.0
+2        bacon    12.0
+3     Pastrami     6.0
+4  corned beef     7.5
+5        Bacon     8.0
+6     pastrami     3.0
+7    honey ham     5.0
+8     nova lox     6.0
+</code></pre>
+                    </div>
+                    <p class="fragment">
+                        Suppose you wanted to add a column indicating the type of animal that each food came from.
+                    </p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+meat_to_animal = {
+    'bacon': 'pig',
+    'pulled pork': 'pig',
+    'pastrami': 'cow',
+    'corned beef': 'cow',
+    'honey ham': 'pig',
+    'nova lox': 'salmon'
+}
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [55]: lowercased = data['food'].str.lower()
+In [56]: lowercased
+Out[56]:
+0          bacon
+1    pulled pork
+2          bacon
+3       pastrami
+4    corned beef
+5          bacon
+6       pastrami
+7      honey ham
+8       nova lox
+Name: food, dtype: object
+</code></pre>
+                    </div>
+                    <p class="fragment">The map method on a Series accepts a function or dict-like object containing a mapping.</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [57]: data['animal'] = lowercased.map(meat_to_animal)
+In [58]: data
+Out[58]:
+          food  ounces  animal
+0        bacon     4.0     pig
+1  pulled pork     3.0     pig
+2        bacon    12.0     pig
+3     Pastrami     6.0     cow
+4  corned beef     7.5     cow
+5        Bacon     8.0     pig
+6     pastrami     3.0     cow
+7    honey ham     5.0     pig
+8     nova lox     6.0  salmon
+
+In [59]: data['animal'] = data['food'].map(lambda x: meat_to_animal[x.lower()])
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h6>Replacing Values</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [60]: data = pd.Series([1., -999., 2., -999., -1000., 3.])
+In [61]: data
+Out[61]:
+0       1.0
+1    -999.0
+2       2.0
+3    -999.0
+4   -1000.0
+5       3.0
+dtype: float64
+</code></pre>
+                    </div>
+                    <p class="fragment">The -999 values might be sentinel values for missing data. To replace these with NA values that pandas understands, we can use replace, producing a new Series.</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [62]: data.replace(-999, np.nan)
+Out[62]:
+0       1.0
+1       NaN
+2       2.0
+3       NaN
+4   -1000.0
+5       3.0
+dtype: float64
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [63]: data.replace([-999, -1000], np.nan)
+Out[63]:
+0   1.0
+1   NaN
+2   2.0
+3   NaN
+4   NaN
+5   3.0
+dtype: float64
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [64]: data.replace([-999, -1000], [np.nan, 0])
+Out[64]:
+0   1.0
+1   NaN
+2   2.0
+3   NaN
+4   0.0
+5   3.0
+dtype: float64
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [65]: data.replace({-999: np.nan, -1000: 0})
+Out[65]:
+0 1.0
+1 NaN
+2 2.0
+3 NaN
+4 0.0
+5 3.0
+dtype: float64
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h6>Renaming Axis Indexes</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [66]: data = pd.DataFrame(np.arange(12).reshape((3, 4)),
+....:                        index=['Ohio', 'Colorado', 'New York'],
+....:                        columns=['one', 'two', 'three', 'four'])
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [67]: transform = lambda x: x[:4].upper()
+In [68]: data.index.map(transform)
+Out[68]: Index(['OHIO', 'COLO', 'NEW '], dtype='object')
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [69]: data.index = data.index.map(transform)
+In [70]: data
+Out[70]:
+      one  two  three  four
+OHIO    0    1      2     3
+COLO    4    5      6     7
+NEW     8    9     10    11
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">If you want to create a transformed version of a dataset without modifying the original, a useful method is rename:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [71]: data.rename(index=str.title, columns=str.upper)
+Out[71]:
+          ONE  TWO  THREE  FOUR
+Ohio        0    1      2     3
+Colorado    4    5      6     7
+New York    8    9     10    11
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [72]: data.rename(index={'OHIO': 'INDIANA'},
+....: columns={'three': 'peekaboo'})
+Out[72]:
+          ONE  TWO  THREE  FOUR
+Ohio        0    1      2     3
+Colorado    4    5      6     7
+New York    8    9     10    11
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [73]: data.rename(index={'OHIO': 'INDIANA'}, inplace=True)
+In [74]: data
+Out[74]:
+      one  two  three  four
+OHIO    0    1      2     3
+COLO    4    5      6     7
+NEW     8    9     10    11
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h6>Discretization and Binning</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [75]: ages = [20, 22, 25, 27, 21, 23, 37, 31, 61, 45, 41, 32]
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [76]: bins = [18, 25, 35, 60, 100]
+In [77]: cats = pd.cut(ages, bins)
+In [78]: cats
+Out[78]:
+[(18, 25], (18, 25], (18, 25], (25, 35], (18, 25], ..., (25, 35], (60, 100], (35, 60], (35, 60], (25, 35]]
+Length: 12
+Categories (4, interval[int64]): [(18, 25] < (25, 35] < (35, 60] < (60, 100]]
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [79]: cats.codes
+Out[79]: array([0, 0, 0, 1, 0, 0, 2, 1, 3, 2, 2, 1], dtype=int8)
+
+In [80]: cats.categories
+Out[80]:
+IntervalIndex([(18, 25], (25, 35], (35, 60], (60, 100]]
+                closed='right',
+                dtype='interval[int64]')
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [81]: pd.value_counts(cats)
+Out[81]:
+(18, 25]    5
+(35, 60]    3
+(25, 35]    3
+(60, 100]   1
+dtype: int64
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">right = False</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [82]: pd.cut(ages, [18, 26, 36, 61, 100], right=False)
+Out[82]:
+[[18, 26), [18, 26), [18, 26), [26, 36), [18, 26), ..., [26, 36), [61, 100), [36,
+61), [36, 61), [26, 36)]
+Length: 12
+Categories (4, interval[int64]): [[18, 26) < [26, 36) < [36, 61) < [61, 100)]
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [83]: group_names = ['Youth', 'YoungAdult', 'MiddleAged', 'Senior']
+In [84]: pd.cut(ages, bins, labels=group_names)
+Out[84]:
+[Youth, Youth, Youth, YoungAdult, Youth, ..., YoungAdult, Senior, MiddleAged, Mid
+dleAged, YoungAdult]
+Length: 12
+Categories (4, object): [Youth < YoungAdult < MiddleAged < Senior]
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">If you pass an integer number of bins to cut instead of explicit bin edges, it will compute equal-length bins based on the minimum and maximum values in the data.</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [85]: data = np.random.rand(20)
+In [86]: pd.cut(data, 4, precision=2)
+#The precision=2 option limits the decimal precision to two digits.
+Out[86]:
+[(0.34, 0.55], (0.34, 0.55], (0.76, 0.97], (0.76, 0.97], (0.34, 0.55], ..., (0.34
+, 0.55], (0.34, 0.55], (0.55, 0.76], (0.34, 0.55], (0.12, 0.34]]
+Length: 20
+Categories (4, interval[float64]): [(0.12, 0.34] < (0.34, 0.55] < (0.55, 0.76] <
+(0.76, 0.97]]
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [87]: data = np.random.randn(1000) # Normally distributed
+In [88]: cats = pd.qcut(data, 4) # Cut into quartiles
+In [89]: cats
+Out[89]:
+[(-0.0265, 0.62], (0.62, 3.928], (-0.68, -0.0265], (0.62, 3.928], (-0.0265, 0.62]
+, ..., (-0.68, -0.0265], (-0.68, -0.0265], (-2.95, -0.68], (0.62, 3.928], (-0.68,
+-0.0265]]
+Length: 1000
+Categories (4, interval[float64]): [(-2.95, -0.68] < (-0.68, -0.0265] < (-0.0265,
+0.62] < (0.62, 3.928]]
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [90]: pd.value_counts(cats)
+Out[90]:
+(0.62, 3.928]     250
+(-0.0265, 0.62]   250
+(-0.68, -0.0265]  250
+(-2.95, -0.68]    250
+dtype: int64
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [91]: pd.qcut(data, [0, 0.1, 0.5, 0.9, 1.])
+Out[91]:
+[(-0.0265, 1.286], (-0.0265, 1.286], (-1.187, -0.0265], (-0.0265, 1.286], (-0.026
+5, 1.286], ..., (-1.187, -0.0265], (-1.187, -0.0265], (-2.95, -1.187], (-0.0265,
+1.286], (-1.187, -0.0265]]
+Length: 1000
+Categories (4, interval[float64]): [(-2.95, -1.187] < (-1.187, -0.0265] < (-0.026
+5, 1.286] < (1.286, 3.928]]
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h6>Detecting and Filtering Outliers</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [92]: data = pd.DataFrame(np.random.randn(1000, 4))
+In [93]: data.describe()
+Out[93]:
+                 0            1            2            3
+count  1000.000000  1000.000000  1000.000000  1000.000000
+mean     -0.012762    -0.008541     0.049758     0.017139
+std       0.975944     1.015344     1.026733     1.005401
+min      -2.679186    -3.621938    -3.219704    -2.964371
+25%      -0.681244    -0.664788    -0.648249    -0.620164
+50%       0.010037     0.010247     0.070204     0.020942
+75%       0.647391     0.633270     0.708981     0.679556
+max       3.116323     3.511593     3.297731     3.035120
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [94]: col = data[2]
+In [95]: col[np.abs(col) > 3]
+Out[95]:
+41      -3.399312
+136     -3.745356
+Name: 2, dtype: float64
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [96]: data[(np.abs(data) > 3).any(1)] #any(1)
+Out[96]:
+            0         1         2         3
+36   1.120158  0.290818  0.242021 -3.898775
+63   0.575808  3.274796 -0.680590 -0.686740
+96   0.293268  3.375605  0.417495  1.415953
+116 -3.167616 -0.703796 -0.414831  0.863160
+465 -3.170814  1.290461 -0.611666  2.377088
+637  0.311756 -4.362014 -0.791572 -1.086314
+651  3.335164 -0.348654 -0.069047  0.745377
+654  0.921333 -3.054937  0.920313  0.006951
+766 -0.693906 -0.253510  3.057165 -1.218517
+998 -3.339060  1.168759 -0.273408 -1.573356
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [97]: data[np.abs(data) > 3] = np.sign(data) * 3
+#The statement np.sign(data) produces 1 and –1 values based on whether the values
+in data are positive or negative.
+In [98]: data.describe()
+Out[98]:
+                 0            1            2            3
+count  1000.000000  1000.000000  1000.000000  1000.000000
+mean     -0.039216    -0.001005     0.002882     0.071338
+std       1.000996     1.032696     0.962890     0.987005
+min      -3.000000    -3.000000    -3.000000    -3.000000
+25%      -0.720370    -0.703707    -0.679956    -0.600975
+50%      -0.033700    -0.012852     0.021940     0.092179
+75%       0.623002     0.735853     0.669355     0.753742
+max       3.000000     3.000000     3.000000     3.000000
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [99]: np.sign(data).head() #Viewing the first 5 lines
+Out[99]:
+     0    1    2    3
+0 -1.0  1.0 -1.0  1.0
+1 -1.0  1.0 -1.0 -1.0
+2  1.0 -1.0 -1.0 -1.0
+3  1.0  1.0 -1.0 -1.0
+4 -1.0  1.0 -1.0 -1.0
+</code></pre>
+                    </div>
+                    <h6 class="fragment">Permutation and Random Sampling</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [100]: df = pd.DataFrame(np.arange(5 * 4).reshape((5, 4)))
+In [101]: sampler = np.random.permutation(5)
+In [102]: sampler
+Out[102]: array([3, 1, 4, 2, 0])
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [103]: df
+Out[103]:
+    0   1   2   3
+0   0   1   2   3
+1   4   5   6   7
+2   8   9  10  11
+3  12  13  14  15
+4  16  17  18  19
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [104]: df.take(sampler)
+Out[104]:
+    0   1   2   3
+3  12  13  14  15
+4  16  17  18  19
+1   4   5   6   7
+2   8   9  10  11
+0   0   1   2   3
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [105]: df.sample(n=3)
+Out[105]:
+    0   1   2   3
+3  12  13  14  15
+4  16  17  18  19
+2   8   9  10  11
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h3>Summary: Data Cleaning (2)</h3>
+                    <ul>
+                        <li class="fragement">
+                            <p>Duplicates: .drop_duplicates(), data.drop_duplicates(['k1']), </p>
+                        </li>
+                        <li class="fragement">
+                            <p>Map: .map() (function or dict-like object)</p>
+                        </li>
+                        <li class="fragement">
+                            <p>Replace: .replace(-999, np.nan), .replace([-999, -1000], [np.nan, 0])</p>
+                        </li>
+                        <li class="fragement">
+                            <p>Renaming: data.index = data.index.map(transform), .rename(), data.rename(index=str.title, columns=str.upper), pd.cut(data, 4, precision=2) </p>
+                        </li>
+                        <li class="fragement">
+                            <p>Discretization: pd.cut(ages, bins), cats.codes, cats.categories, pd.value_counts(cats) (right=False) </p>
+                        </li>
+                        <li class="fragement">
+                            <p>Filtering: data[np.abs(data) > 3] = np.sign(data) * 3, </p>
+                        </li>
+                    </ul>
+                </section>
+            </section>
+            <section>
+                <section data-background="#2980b9" style="color: white">
+                    <h2 style="color: white">14.3 Data Wrangling: Join, Combine, and Reshape</h2>
+                </section>
+                <section>
+                    <h6>Hierarchical Indexing</h6>
+                    <p class="fragment">Hierarchical indexing is an important feature of pandas that enables you to have multiple (two or more) index levels on an axis. Somewhat abstractly, it provides a way for you to work with higher dimensional data in a lower dimensional form.</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [9]: data = pd.Series(np.random.randn(9),
+...:                    index=[['a', 'a', 'a', 'b', 'b', 'c', 'c', 'd', 'd'],
+...:                            [1, 2, 3, 1, 3, 1, 2, 2, 3]])
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [10]: data
+Out[10]:
+a  1   -0.076966
+   2    0.894841
+   3   -0.965875
+b  1   -0.397153
+   3    0.877894
+c  1   -1.035062
+   2    0.854881
+d  2   -0.158001
+   3   -0.831267
+dtype: float64
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [11]: data.index
+Out[11]:
+MultiIndex(levels=[['a', 'b', 'c', 'd'], [1, 2, 3]],
+           labels=[[0, 0, 0, 1, 1, 2, 2, 3, 3], [0, 1, 2, 0, 2, 0, 1, 1, 2]])
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">With a hierarchically indexed object, so-called partial indexing is possible, enabling you to concisely select subsets of the data:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [12]: data['b']
+Out[12]:
+1 -0.555730
+3 1.965781
+dtype: float64
+
+In [13]: data['b':'c']
+Out[13]:
+b  1   -0.627176
+   3   -0.114612
+c  1   -0.152330
+   2   -1.896110
+dtype: float64
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [14]: data.loc[['b', 'd']]
+Out[14]:
+b  1   -0.669723
+   3   -0.383279
+d  2    0.510082
+   3   -0.585097
+dtype: float64
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [15]: data.loc[:, 2]
+Out[15]:
+a   -0.398875
+c   -0.377238
+d    0.703583
+dtype: float64
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">You could rearrange the data into a DataFrame using its unstack method:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [16]: data.unstack()
+Out[16]:
+          1         2         3
+a -1.778624  0.528078  0.269542
+b  0.207677       NaN -1.382435
+c  0.031138  2.437659       NaN
+d       NaN -0.833248 -0.258377
+
+In [17]: data.unstack().stack()
+</code></pre>
+                    </div>
+                    <p class="fragment">With a DataFrame, either axis can have a hierarchical index:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [18]: frame = pd.DataFrame(np.arange(12).reshape((4, 3)),
+....:                       index=[['a', 'a', 'b', 'b'], [1, 2, 1, 2]],
+....:                       columns=[['Ohio', 'Ohio', 'Colorado'],
+....:                       ['Green', 'Red', 'Green']])
+
+In [19]: frame
+Out[19]:
+     Ohio     Colorado
+    Green Red    Green
+a 1     0   1        2
+  2     3   4        5
+b 1     6   7        8
+  2     9  10       11
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [20]: frame.index.names = ['key1', 'key2']
+In [21]: frame.columns.names = ['state', 'color']
+In [22]: frame
+Out[22]:
+state      Ohio     Colorado
+color     Green Red    Green
+key1 key2                   
+a    1        0   1        2
+     2        3   4        5
+b    1        6   7        8
+     2        9  10       11
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [23]: frame['Ohio']
+Out[23]:
+color      Green  Red
+key1 key2            
+a    1         0    1
+     2         3    4
+b    1         6    7
+     2         9   10
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h6>Reordering and Sorting Levels</h6>
+                    <p class="fragment">At times you will need to rearrange the order of the levels on an axis or sort the data by the values in one specific level.</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [24]: frame.swaplevel('key1', 'key2')
+Out[24]:
+state      Ohio     Colorado
+color     Green Red    Green
+key2 key1                   
+1    a        0   1        2
+2    a        3   4        5
+1    b        6   7        8
+2    b        9  10       11
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [25]: frame.sort_index(level=1)
+Out[25]:
+state      Ohio     Colorado
+color     Green Red    Green
+key1 key2                   
+a    1        0   1        2
+b    1        6   7        8
+a    2        3   4        5
+b    2        9  10       11
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [26]: frame.swaplevel(0, 1).sort_index(level=0)
+Out[26]:
+state      Ohio     Colorado
+color     Green Red    Green
+key2 key1                   
+1    a        0   1        2
+     b        6   7        8
+2    a        3   4        5
+     b        9  10       11
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h6>Summary Statistics by Level</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [27]: frame.sum(level='key2')
+Out[27]:
+state  Ohio     Colorado
+color Green Red    Green
+key2                    
+1         6   8       10
+2        12  14       16
+
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [28]: frame.sum(level='color', axis=1) 
+#level 'color' is at axis 1, so you should add axis=1 here.
+Out[28]:
+color      Green  Red
+key1 key2            
+a    1         2    1
+     2         8    4
+b    1        14    7
+     2        20   10
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h6>Indexing with a DataFrame’s columns</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [29]: frame = pd.DataFrame({'a': range(7), 'b': range(7, 0, -1),
+....:                          'c': ['one', 'one', 'one', 'two', 'two', 'two', 'two'],
+....:                          'd': [0, 1, 2, 0, 1, 2, 3]})
+In [30]: frame
+Out[30]:
+   a  b    c  d
+0  0  7  one  0
+1  1  6  one  1
+2  2  5  one  2
+3  3  4  two  0
+4  4  3  two  1
+5  5  2  two  2
+6  6  1  two  3
+</code></pre>
+                    </div>
+                    <p class="fragment">DataFrame’s set_index function will create a new DataFrame using one or more of its columns as the index:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [31]: frame2 = frame.set_index(['c', 'd'])
+In [32]: frame2
+Out[32]:
+       a  b
+c   d      
+one 0  0  7
+    1  1  6
+    2  2  5
+two 0  3  4
+    1  4  3
+    2  5  2
+    3  6  1
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [33]: frame.set_index(['c', 'd'], drop=False)
+Out[33]:
+       a  b    c  d
+c   d              
+one 0  0  7  one  0
+    1  1  6  one  1
+    2  2  5  one  2
+two 0  3  4  two  0
+    1  4  3  two  1
+    2  5  2  two  2
+    3  6  1  two  3
+
+In [34]: frame2.reset_index() 
+#reset_index, on the other hand, does the opposite of set_index.
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h3>Summary: Data Wrangling (1)</h3>
+                    <ul>
+                        <li class="fragement">
+                            <p>Hierarchical Indexing: .unstack(), .stack(), .swaplevel('key1', 'key2'),sort_index(level=1)</p>
+                        </li>
+                        <li class="fragement">
+                            <p>Indexing with a DataFrame’s columns: frame.set_index(['c', 'd']), </p>
+                        </li>
+                    </ul>
+                </section>
+            </section>
+            <section>
+                <section data-background="#2980b9" style="color: white">
+                    <h2 style="color: white">14.4 Combining and Merging Datasets</h2>
+                </section>
+                <section>
+                    <h6>Database-Style DataFrame Joins</h6>
+                    <p class="fragment">Merge or join operations combine datasets by linking rows using one or more keys.</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [35]: df1 = pd.DataFrame({'key': ['b', 'b', 'a', 'c', 'a', 'a', 'b'],
+....:                        'data1': range(7)})
+In [36]: df2 = pd.DataFrame({'key': ['a', 'b', 'd'],
+....:                        'data2': range(3)})
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [37]: df1
+Out[37]:
+  key  data1
+0   b      0
+1   b      1
+2   a      2
+3   c      3
+4   a      4
+5   a      5
+6   b      6
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [38]: df2
+Out[38]:
+  key  data2
+0   a      0
+1   b      1
+2   d      2
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">This is an example of a many-to-one join：</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [39]: pd.merge(df1, df2)
+Out[39]:
+  key  data1  data2
+0   b      0      1
+1   b      1      1
+2   b      6      1
+3   a      2      0
+4   a      4      0
+5   a      5      0
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [40]: pd.merge(df1, df2, on='key')
+Out[40]:
+  key  data1  data2
+0   b      0      1
+1   b      1      1
+2   b      6      1
+3   a      2      0
+4   a      4      0
+5   a      5      0
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">If the column names are different in each object, you can specify them separately:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [41]: df3 = pd.DataFrame({'lkey': ['b', 'b', 'a', 'c', 'a', 'a', 'b'],
+....:                        'data1': range(7)})
+In [42]: df4 = pd.DataFrame({'rkey': ['a', 'b', 'd'],
+....:                        'data2': range(3)})
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [43]: pd.merge(df3, df4, left_on='lkey', right_on='rkey')
+Out[43]:
+  lkey  data1 rkey  data2
+0    b      0    b      1
+1    b      1    b      1
+2    b      6    b      1
+3    a      2    a      0
+4    a      4    a      0
+5    a      5    a      0
+</code></pre>
+                    </div>
+                    <p class="fragment">You may notice that the 'c' and 'd' values and associated data are missing from the result. By default merge does an 'inner' join; the keys in the result are the intersection, or the common set found in both tables. Other possible options are 'left', 'right', and 'outer'. The outer join takes the union of the keys, combining the effect of applying both left and right joins:</p>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [44]: pd.merge(df1, df2, how='outer')
+Out[44]:
+  key  data1  data2
+0   b    0.0    1.0
+1   b    1.0    1.0
+2   b    6.0    1.0
+3   a    2.0    0.0
+4   a    4.0    0.0
+5   a    5.0    0.0
+6   c    3.0    NaN
+7   d    NaN    2.0
+</code></pre>
+                    </div>
+                    <div class="fragment"><img data-src="w1.png" style="height: 200pt"></div>
+                </section>
+                <section>
+                    <p class="fragment">Many-to-many merges have well-defined, though not necessarily intuitive, behavior.</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [45]: df1 = pd.DataFrame({'key': ['b', 'b', 'a', 'c', 'a', 'b'],
+....:                        'data1': range(6)})
+In [46]: df2 = pd.DataFrame({'key': ['a', 'b', 'a', 'b', 'd'],
+....:                        'data2': range(5)})
+In [47]: df1
+Out[47]:
+  key  data1
+0   b      0
+1   b      1
+2   a      2
+3   c      3
+4   a      4
+5   b      5
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [48]: df2
+Out[48]:
+  key  data2
+0   a      0
+1   b      1
+2   a      2
+3   b      3
+4   d      4
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [49]: pd.merge(df1, df2, on='key', how='left')
+Out[49]:
+   key  data1  data2
+0    b      0    1.0
+1    b      0    3.0
+2    b      1    1.0
+3    b      1    3.0
+4    a      2    0.0
+5    a      2    2.0
+6    c      3    NaN
+7    a      4    0.0
+8    a      4    2.0
+9    b      5    1.0
+10   b      5    3.0
+</code></pre>
+                    </div>
+                    <p class="fragment">Many-to-many joins form the Cartesian product of the rows. Since there were three 'b' rows in the left DataFrame and two in the right one, there are six 'b' rows in the result. The join method only affects the distinct key values appearing in the result:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [50]: pd.merge(df1, df2, how='inner')
+Out[50]:
+  key  data1  data2
+0   b      0      1
+1   b      0      3
+2   b      1      1
+3   b      1      3
+4   b      5      1
+5   b      5      3
+6   a      2      0
+7   a      2      2
+8   a      4      0
+9   a      4      2
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h6>Indexing with a DataFrame’s columns</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [51]: left = pd.DataFrame({'key1': ['foo', 'foo', 'bar'],
+....:                         'key2': ['one', 'two', 'one'],
+....:                         'lval': [1, 2, 3]})
+In [52]: right = pd.DataFrame({'key1': ['foo', 'foo', 'bar', 'bar'],
+....:                          'key2': ['one', 'one', 'one', 'two'],
+....:                          'rval': [4, 5, 6, 7]})
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [53]: pd.merge(left, right, on=['key1', 'key2'], how='outer')
+Out[53]:
+  key1 key2  lval  rval
+0  foo  one   1.0   4.0
+1  foo  one   1.0   5.0
+2  foo  two   2.0   NaN
+3  bar  one   3.0   6.0
+4  bar  two   NaN   7.0
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [54]: pd.merge(left, right, on='key1')
+Out[54]:
+  key1 key2_x  lval key2_y  rval
+0  foo    one     1    one     4
+1  foo    one     1    one     5
+2  foo    two     2    one     4
+3  foo    two     2    one     5
+4  bar    one     3    one     6
+5  bar    one     3    two     7
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [55]: pd.merge(left, right, on='key1', suffixes=('_left', '_right'))
+Out[55]:
+  key1 key2_left  lval key2_right  rval
+0  foo       one     1        one     4
+1  foo       one     1        one     5
+2  foo       two     2        one     4
+3  foo       two     2        one     5
+4  bar       one     3        one     6
+5  bar       one     3        two     7
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h6>Merging on Index</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [56]: left1 = pd.DataFrame({'key': ['a', 'b', 'a', 'a', 'b', 'c'],
+....:                          'value': range(6)})
+In [57]: right1 = pd.DataFrame({'group_val': [3.5, 7]}, index=['a', 'b'])
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [58]: left1
+Out[58]:
+  key  value
+0   a      0
+1   b      1
+2   a      2
+3   a      3
+4   b      4
+5   c      5
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [59]: right1
+Out[59]:
+   group_val
+a        3.5
+b        7.0
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [60]: pd.merge(left1, right1, left_on='key', right_index=True) #left_on
+Out[60]: 
+  key  value  group_val
+0   a      0        3.5
+2   a      2        3.5
+3   a      3        3.5
+1   b      1        7.0
+4   b      4        7.0
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">With hierarchically indexed data, things are more complicated, as joining on index is implicitly a multiple-key merge:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+   data    key1  key2
+0   0.0    Ohio  2000
+1   1.0    Ohio  2001
+2   2.0    Ohio  2002
+3   3.0  Nevada  2001
+4   4.0  Nevada  2002
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+             event1  event2
+Nevada 2001       0       1
+       2000       2       3
+Ohio   2000       4       5
+       2000       6       7
+       2001       8       9
+       2002      10      11
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [66]: pd.merge(lefth, righth, left_on=['key1', 'key2'], right_index=True)
+Out[66]:
+   data    key1  key2  event1  event2
+0   0.0    Ohio  2000       4       5
+0   0.0    Ohio  2000       6       7
+1   1.0    Ohio  2001       8       9
+2   2.0    Ohio  2002      10      11
+3   3.0  Nevada  2001       0       1
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [67]: pd.merge(lefth, righth, left_on=['key1', 'key2'],
+....:             right_index=True, how='outer')
+Out[67]:
+   data    key1  key2  event1  event2
+0   0.0    Ohio  2000     4.0     5.0
+0   0.0    Ohio  2000     6.0     7.0
+1   1.0    Ohio  2001     8.0     9.0
+2   2.0    Ohio  2002    10.0    11.0
+3   3.0  Nevada  2001     0.0     1.0
+4   4.0  Nevada  2002     NaN     NaN
+4   NaN  Nevada  2000     2.0     3.0
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">DataFrame has a convenient join instance for merging by index. It can also be used to combine together many DataFrame objects having the same or similar indexes but non-overlapping columns.</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+   Ohio  Nevada
+a   1.0     2.0
+c   3.0     4.0
+e   5.0     6.0
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+   Missouri  Alabama
+b       7.0      8.0
+c       9.0     10.0
+d      11.0     12.0
+e      13.0     14.0
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [73]: left2.join(right2, how='outer')
+   Ohio  Nevada  Missouri  Alabama
+a   1.0     2.0       NaN      NaN
+b   NaN     NaN       7.0      8.0
+c   3.0     4.0       9.0     10.0
+d   NaN     NaN      11.0     12.0
+e   5.0     6.0      13.0     14.0
+
+In [74]: left1.join(right1, on='key') #left on key, right on index
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">for simple index-on-index merges, you can pass a list of DataFrames to join.</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+   New York  Oregon
+a       7.0     8.0
+c       9.0    10.0
+e      11.0    12.0
+f      16.0    17.0
+
+In [77]: left2.join([right2, another])
+Out[77]:
+   Ohio  Nevada  Missouri  Alabama  New York  Oregon
+a   1.0     2.0       NaN      NaN       7.0     8.0
+c   3.0     4.0       9.0     10.0       9.0    10.0
+e   5.0     6.0      13.0     14.0      11.0    12.0
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [78]: left2.join([right2, another], how='outer')
+Out[78]:
+   Ohio  Nevada  Missouri  Alabama  New York  Oregon
+a   1.0     2.0       NaN      NaN       7.0     8.0
+b   NaN     NaN       7.0      8.0       NaN     NaN
+c   3.0     4.0       9.0     10.0       9.0    10.0
+d   NaN     NaN      11.0     12.0       NaN     NaN
+e   5.0     6.0      13.0     14.0      11.0    12.0
+f   NaN     NaN       NaN      NaN      16.0    17.0
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h6>Concatenating Along an Axis</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [82]: s1 = pd.Series([0, 1], index=['a', 'b'])
+In [83]: s2 = pd.Series([2, 3, 4], index=['c', 'd', 'e'])
+In [84]: s3 = pd.Series([5, 6], index=['f', 'g'])
+
+In [85]: pd.concat([s1, s2, s3])
+Out[85]:
+a 0
+b 1
+c 2
+d 3
+e 4
+f 5
+g 6
+dtype: int64
+</code></pre>
+                    </div>
+                    <p class="fragment">By default concat works along axis=0, producing another Series.</p>
+                </section>
+                <section>
+                    <p class="fragment">you pass axis=1, the result will instead be a DataFrame (axis=1 is the columns):</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [86]: pd.concat([s1, s2, s3], axis=1)
+Out[86]:
+     0    1    2
+a  0.0  NaN  NaN
+b  1.0  NaN  NaN
+c  NaN  2.0  NaN
+d  NaN  3.0  NaN
+e  NaN  4.0  NaN
+f  NaN  NaN  5.0
+g  NaN  NaN  6.0
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [92]: result = pd.concat([s1, s1, s3], keys=['one', 'two', 'three'])
+In [93]: result
+Out[93]:
+one    a    0
+       b    1
+two    a    0
+       b    1
+three  f    5
+       g    6
+dtype: int64
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [94]: result.unstack()
+Out[94]:
+         a    b    f    g
+one    0.0  1.0  NaN  NaN
+two    0.0  1.0  NaN  NaN
+three  NaN  NaN  5.0  6.0
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">In the case of combining Series along axis=1, the keys become the DataFrame column headers:
+                    </p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [95]: pd.concat([s1, s2, s3], axis=1, keys=['one', 'two', 'three'])
+Out[95]:
+   one  two  three
+a  0.0  NaN    NaN
+b  1.0  NaN    NaN
+c  NaN  2.0    NaN
+d  NaN  3.0    NaN
+e  NaN  4.0    NaN
+f  NaN  NaN    5.0
+g  NaN  NaN    6.0
+</code></pre>
+                    </div>
+                    <p class="fragment">The same logic extends to DataFrame objects:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+   one  two
+a    0    1
+b    2    3
+c    4    5
+
+   three  four
+a      5     6
+c      7     8
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [100]: pd.concat([df1, df2], axis=1, keys=['level1', 'level2'])
+Out[100]:
+  level1     level2     
+     one two  three four
+a      0   1    5.0  6.0
+b      2   3    NaN  NaN
+c      4   5    7.0  8.0
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h6>Combining Data with Overlap</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+     a    b   c
+0  1.0  NaN   2
+1  NaN  2.0   6
+2  5.0  NaN  10
+3  NaN  6.0  14
+
+     a    b
+0  5.0  NaN
+1  4.0  3.0
+2  NaN  4.0
+3  3.0  6.0
+4  7.0  8.0
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [119]: df1.combine_first(df2)
+Out[119]:
+     a    b     c
+0  1.0  NaN   2.0
+1  4.0  2.0   6.0
+2  5.0  4.0  10.0
+3  3.0  6.0  14.0
+4  7.0  8.0   NaN
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h3>Summary: Data Wrangling (2)</h3>
+                    <ul>
+                        <li class="fragement">
+                            <p>merge()</p>
+                        </li>
+                        <li class="fragement">
+                            <p>join() (merge on index)</p>
+                        </li>
+                        <li class="fragement">
+                            <p>concat()</p>
+                        </li>
+                    </ul>
+                </section>
+            </section>
+            <section>
+                <section data-background="#2980b9" style="color: white">
+                    <h2 style="color: white">14.5 Reshaping and Pivoting</h2>
+                </section>
+                <section>
+                    <h6>Reshaping with Hierarchical Indexing</h6>
+                    <p class="fragment">Merge or join operations combine datasets by linking rows using one or more keys.</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+number    one  two  three
+state                    
+Ohio        0    1      2
+Colorado    3    4      5
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [122]: result = data.stack()
+In [123]: result
+Out[123]:
+state     number
+Ohio      one       0
+          two       1
+          three     2
+Colorado  one       3
+          two       4
+          three     5
+dtype: int32
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [124]: result.unstack()
+Out[124]:
+number    one  two  three
+state                    
+Ohio        0    1      2
+Colorado    3    4      5
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">Unstacking might introduce missing data if all of the values in the level aren’t found in each of the subgroups:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [127]: s1 = pd.Series([0, 1, 2, 3], index=['a', 'b', 'c', 'd'])
+In [128]: s2 = pd.Series([4, 5, 6], index=['c', 'd', 'e'])
+In [129]: data2 = pd.concat([s1, s2], keys=['one', 'two'])
+
+In [130]: data2
+Out[130]:
+one  a    0
+     b    1
+     c    2
+     d    3
+two  c    4
+     d    5
+     e    6
+dtype: int64
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [131]: data2.unstack()
+Out[131]:
+       a    b    c    d    e
+one  0.0  1.0  2.0  3.0  NaN
+two  NaN  NaN  4.0  5.0  6.0
+</code></pre>
+                    </div>
+                    <p class="fragment">When you unstack in a DataFrame, the level unstacked becomes the lowest level in the result.</p>
+                </section>
+                <section>
+                    <p class="fragment">If the column names are different in each object, you can specify them separately:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [135]: df = pd.DataFrame({'left': result, 'right': result + 5},
+.....:                      columns=pd.Index(['left', 'right'], name='side'))
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [136]: df
+Out[136]:
+side             left  right
+state    number             
+Ohio     one        0      5
+         two        1      6
+         three      2      7
+Colorado one        3      8
+         two        4      9
+         three      5     10
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [137]: df.unstack('state')
+Out[137]:
+side   left          right         
+state  Ohio Colorado  Ohio Colorado
+number                             
+one       0        3     5        8
+two       1        4     6        9
+three     2        5     7       10
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h6>Pivoting “Long” to “Wide” Format</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+        date     item     value
+0 1959-03-31  realgdp  2710.349
+1 1959-03-31     infl     0.000
+2 1959-03-31    unemp     5.800
+3 1959-06-30  realgdp  2778.801
+4 1959-06-30     infl     2.340
+5 1959-06-30    unemp     5.100
+6 1959-09-30  realgdp  2775.488
+7 1959-09-30     infl     2.740
+8 1959-09-30    unemp     5.300
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [147]: pivoted = ldata.pivot('date', 'item', 'value')
+In [148]: pivoted
+Out[148]:
+item        infl   realgdp  unemp
+date                             
+1959-03-31  0.00  2710.349    5.8
+1959-06-30  2.34  2778.801    5.1
+1959-09-30  2.74  2775.488    5.3
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [149]: ldata['value2'] = np.random.randn(len(ldata))
+In [150]: ldata[:10]
+Out[150]:
+        date     item     value    value2
+0 1959-03-31  realgdp  2710.349  0.583927
+1 1959-03-31     infl     0.000 -0.524186
+2 1959-03-31    unemp     5.800  1.093539
+3 1959-06-30  realgdp  2778.801 -0.256009
+4 1959-06-30     infl     2.340  0.334041
+5 1959-06-30    unemp     5.100 -1.940678
+6 1959-09-30  realgdp  2775.488  0.083931
+7 1959-09-30     infl     2.740 -0.420630
+8 1959-09-30    unemp     5.300  0.319793
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [151]: pivoted = ldata.pivot('date', 'item')
+
+Out[152]:
+           value                    value2                    
+item        infl   realgdp unemp      infl   realgdp     unemp
+date                                                          
+1959-03-31  0.00  2710.349   5.8 -0.524186  0.583927  1.093539
+1959-06-30  2.34  2778.801   5.1  0.334041 -0.256009 -1.940678
+1959-09-30  2.74  2775.488   5.3 -0.420630  0.083931  0.319793
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [153]: pivoted['value']
+Out[49]:
+item        infl   realgdp  unemp
+date                             
+1959-03-31  0.00  2710.349    5.8
+1959-06-30  2.34  2778.801    5.1
+1959-09-30  2.74  2775.488    5.3
+</code></pre>
+                    </div>
+                    <p class="fragment">Note that pivot is equivalent to creating a hierarchical index using set_index followed
+                    </p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [154]: unstacked = ldata.set_index(['date', 'item']).unstack('item')
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h6>Pivoting “Wide” to “Long” Format</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+   A  B  C  key
+0  1  4  7  foo
+1  2  5  8  bar
+2  3  6  9  baz
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [159]: melted = pd.melt(df, ['key'])
+In [160]: melted
+   key variable  value
+0  foo        A      1
+1  bar        A      2
+2  baz        A      3
+3  foo        B      4
+4  bar        B      5
+5  baz        B      6
+6  foo        C      7
+7  bar        C      8
+8  baz        C      9
+</code></pre>
+                    </div>
+                    <p class="fragment">Using pivot, we can reshape back to the original layout:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [161]: reshaped = melted.pivot('key', 'variable', 'value')
+In [162]: reshaped
+Out[162]:
+variable  A  B  C
+key              
+bar       2  5  8
+baz       3  6  9
+foo       1  4  7
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [163]: reshaped.reset_index()
+Out[163]:
+variable  key  A  B  C
+0         bar  2  5  8
+1         baz  3  6  9
+2         foo  1  4  7
+</code></pre>
+                    </div>
+                    <p class="fragment">You can also specify a subset of columns to use as value columns:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [164]: pd.melt(df, id_vars=['key'], value_vars=['A', 'B'])
+Out[164]:
+   key variable  value
+0  foo        A      1
+1  bar        A      2
+2  baz        A      3
+3  foo        B      4
+4  bar        B      5
+5  baz        B      6
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">pandas.melt can be used without any group identifiers, too:</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [165]: pd.melt(df, value_vars=['A', 'B', 'C'])
+Out[165]:
+  variable  value
+0        A      1
+1        A      2
+2        A      3
+3        B      4
+4        B      5
+5        B      6
+6        C      7
+7        C      8
+8        C      9
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+In [166]: pd.melt(df, value_vars=['key', 'A', 'B'])
+Out[166]:
+  variable value
+0      key   foo
+1      key   bar
+2      key   baz
+3        A     1
+4        A     2
+5        A     3
+6        B     4
+7        B     5
+8        B     6
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h3>Summary: Data Wrangling (3)</h3>
+                    <ul>
+                        <li class="fragement">
+                            <p>.pivot()</p>
+                        </li>
+                        <li class="fragement">
+                            <p>.melt()</p>
+                        </li>
+                    </ul>
+                </section>
+            </section>
+            <section>
+                <section data-background="#2c3e50" style="color: white; text-align: left;">
+                    <h2 style="color: white">Summary</h2>
+                    <ul>
+                        <ul>
+                            <li>Reading: Python for Data Analysis, Chapter 7 & 8</li>
+                        </ul>
+                    </ul>
+                </section>
+            </section>
+        </div>
     </div>
-</article>
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.js"></script>
+    <script>
+    // More info about config & dependencies:
+    // - https://github.com/hakimel/reveal.js#configuration
+    // - https://github.com/hakimel/reveal.js#dependencies
+    Reveal.initialize({
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 960,
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        // Bounds for smallest/largest possible scale to apply to content
+        minScale: 0.2,
+        maxScale: 1.5,
+
+        // Display controls in the bottom right corner
+        controls: true,
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Set default timing of 2 minutes per slide
+        defaultTiming: 120,
+
+        // Display the page number of the current slide
+        slideNumber: true,
+
+        // Push each slide change to the browser history
+        history: false,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Vertical centering of slides
+        center: true,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autolaying embedded media (video/audio/iframe)
+        // - null: Media will only autoplay if data-autoplay is present
+        // - true: All media will autoplay, regardless of individual setting
+        // - false: No media will autoplay, regardless of individual setting
+        autoPlayMedia: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: Reveal.navigateNext,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // Hides the address bar on mobile devices
+        hideAddressBar: true,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style
+        transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+        // Transition speed
+        transitionSpeed: 'default', // default/fast/slow
+
+        // Transition style for full page slide backgrounds
+        backgroundTransition: 'fade', // none/fade/slide/convex/concave/zoom
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Parallax background image
+        parallaxBackgroundImage: '', // e.g. "'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg'"
+
+        // Parallax background size
+        parallaxBackgroundSize: '', // CSS syntax, e.g. "2100px 900px"
+
+        // Number of pixels to move the parallax background per slide
+        // - Calculated automatically unless specified
+        // - Set to 0 to disable movement along an axis
+        parallaxBackgroundHorizontal: null,
+        parallaxBackgroundVertical: null,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        dependencies: [
+            { src: 'plugin/markdown/marked.js' },
+            { src: 'plugin/markdown/markdown.js' },
+            { src: 'plugin/notes/notes.js', async: true },
+            { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+            // Zoom in and out with Alt+click
+            { src: 'plugin/zoom-js/zoom.js', async: true },
+
+            // Speaker notes
+            { src: 'plugin/notes/notes.js', async: true },
+
+            // MathJax
+            { src: 'plugin/math/math.js', async: true },
+            { src: 'plugin/line-numbers/line-numbers.js' }
+        ]
+    });
+    </script>
+</body>
+
+</html>
