@@ -86,7 +86,7 @@ def gcd(a,b):
                     <ul>
                         <li>Example 2: Fibonacci Numbers</li>
                         <li>The Fibonacci Sequence is the series of numbers:</li>
-                        <li>0, 1, 1, 2, 3, 5, 8, 13, 21, 34, ...</li>
+                        <li>1, 1, 2, 3, 5, 8, 13, 21, 34, ...</li>
                     </ul>
                     <div class="fragment">
                         <pre><code class="line-numbers" data-trim contenteditable>
@@ -321,9 +321,9 @@ def merge_sort(a_list):
 
         merge_sort(left_half)
         merge_sort(right_half)
-    i = 0
-    j = 0
-    k = 0
+        i = 0
+        j = 0
+        k = 0
 </code></pre>
                     </div>
                 </section>
@@ -334,25 +334,25 @@ def merge_sort(a_list):
                     <div class="fragment">
                         <pre><code class="line-numbers" data-trim contenteditable data-noescape>
 #continue
-    while i < len(left_half) and j < len(right_half):
-        if left_half[i] < right_half[j]:
+        while i < len(left_half) and j < len(right_half):
+            if left_half[i] < right_half[j]:
+                a_list[k] = left_half[i]
+                i = i + 1
+            else:
+                a_list[k] = right_half[j]
+                j = j + 1
+            k = k + 1
+
+        while i < len(left_half):
             a_list[k] = left_half[i]
             i = i + 1
-        else:
+            k = k + 1
+
+        while j < len(right_half):
             a_list[k] = right_half[j]
             j = j + 1
             k = k + 1
-
-    while i < len(left_half):
-        a_list[k] = left_half[i]
-        i = i + 1
-        k = k + 1
-
-    while j < len(right_half):
-        a_list[k] = right_half[j]
-        j = j + 1
-        k = k + 1
-print("Merging ", a_list)
+    print("Merging ", a_list)
 </code></pre>
                     </div>
                 </section>
@@ -438,6 +438,7 @@ def quick_sort_helper(a_list, first, last):
                 <section>
                     <div class="fragment">
                         <pre><code class="line-numbers" data-trim contenteditable data-noescape>
+#continue
 def partition(a_list, first, last):
     pivot_value = a_list[first]
     left_mark = first + 1
@@ -466,6 +467,13 @@ def partition(a_list, first, last):
     a_list[right_mark] = temp
 
     return right_mark
+</code></pre>
+                    </div>
+                                        <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable data-noescape>
+a_list=[54, 26, 93, 17, 77, 31, 44, 55, 20]
+quick_sort(a_list)
+print(a_list)
 </code></pre>
                     </div>
                 </section>
