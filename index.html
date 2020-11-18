@@ -25,534 +25,411 @@
         <div class="slides">
             <section data-background-video="bgm.mp4" data-background-video-loop data-background-video-muted style="text-align: left;">
                 <h2 style="color: white">Python Programming</h2>
-                <h5 style="color: white">Lecture 14 Recursion, Sorting Algorithms</h5>
+                <h5 style="color: white">Lecture 14 Web Scraping with Python</h5>
+            </section>
+                        <section>
+                <section data-background="#2980b9" style="color: white">
+                    <h2 style="color: white">14.1 Scraping Examples</h2>
+                </section>
+                <section>
+                    <a href="https://www.smzdm.com/">什么值得买 (smzdm)</a>
+                    <div class="fragment"><img data-src='smzdm.png' style="height: 300pt"></div>
+                </section>
+                <section>
+                    <h6 class="fragment">Requests: Single Page</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+import requests
+import pandas as pd
+
+headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) \
+        AppleWebKit/537.36 (KHTML, like Gecko) \
+        Chrome/70.0.3538.25 \
+        Safari/537.36 Core/1.70.3823.400 QQBrowser/10.7.4307.400'}
+params ={"p":1,
+       "past_num":20}
+r=requests.get("https://www.smzdm.com/homepage/json_more", \
+                params=params, headers=headers)
+x=r.json()
+data= x['data'] 
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+title=[]; price=[]; date=[]; category=[]; atype=[]; mall=[]
+for i in range(len(data)):
+    atype.append(data[i]['article_type'])
+    if data[i]['article_type']=="好价":
+        title.append(data[i]['article_title'])
+        price.append(data[i]['article_price'])
+        date.append(data[i]['article_date'])
+        category.append(data[i]['top_category'])
+        mall.append(data[i]['article_mall'])
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+ex_data=pd.DataFrame()
+ex_data['article_title']=title
+ex_data['article_price']=price
+ex_data['article_date']=date
+ex_data['top_category']=category
+ex_data['article_mall']=mall
+print(atype)
+print(title)
+ex_data.to_excel(excel_writer='smzdm.xlsx', encoding='utf-8')
+</code></pre>
+                    </div>
+                    <h6 class="fragment">Requests: Multiple Pages</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+import requests
+import pandas as pd
+
+headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) \
+        AppleWebKit/537.36 (KHTML, like Gecko) \
+        Chrome/70.0.3538.25 \
+        Safari/537.36 Core/1.70.3823.400 QQBrowser/10.7.4307.400'}
+data=[]
+for page in range(1,6):
+    params ={"p":page, "past_num":page*20}
+    r=requests.get("https://www.smzdm.com/homepage/json_more", \
+                    params=params, headers=headers)
+    x = r.json()
+    data = data + x['data']
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <a href="https://dxy.com/">丁香医生</a>
+                    <div class="fragment"><img data-src='dxys.jpg' style="height: 300pt"></div>
+                </section>
+                <section>
+                    <h6>Requests + BeautifulSoup</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+import requests
+from bs4 import BeautifulSoup
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+
+headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) \
+        AppleWebKit/537.36 (KHTML, like Gecko) \
+        Chrome/70.0.3538.25 \
+        Safari/537.36 Core/1.70.3823.400 QQBrowser/10.7.4307.400'}
+params ={"query":"腿"}
+r=requests.get("https://dxy.com/search/result", \
+                 params=params,headers=headers)
+print(r.status_code)
+print(r.headers)
+print(r.cookies)
+print(r.url)
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+soup=BeautifulSoup(r.content, 'lxml')
+print(soup.prettify())
+print(soup.title.string)
+print(soup.title)
+print(soup.head)
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">Tag (标签)，Attribute (属性)， 节点</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+print(soup.div) # div标签节点
+print(soup.div.attrs) # div标签节点所有属性
+print(soup.div['id']) # id属性
+print(soup.h2) # h2是标题标签节点 h1, h2,...
+print(soup.h2.string) # h2是标题标签包裹的文本
+</code></pre>
+                    </div>
+                    <p class="fragment">子节点和父节点 </p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+print(soup.a.contents) # list为所有的子节点
+print(soup.a.children) # iterator，用list()读出
+print(soup.a.parent)   # 所有的父节点
+print(soup.h2.next_sibling) # 同级的下一个兄弟节点
+print(soup.h2.previous_sibling) # 同级的上一个兄弟节点
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+list_a = soup.find_all(attrs={"class":"content-title-more common-text-link"})
+print(list_a)
+print(list_a[0]["href"])
+all_url = list_a[0]["href"]
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+r_all = requests.get(all_url)
+soup_all = BeautifulSoup(r_all.content, 'lxml')
+content_list = soup_all.find_all(attrs={"class":"article-title"})
+print(content_list)
+
+article_url = []
+article_title = []
+for i in range(len(content_list)):
+    article_url.append(content_list[i]["href"])
+    article_title.append(content_list[i].contents[0].string)
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <p class="fragment">Save to .docx files</p>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+import os
+import re
+import pypandoc
+exist=os.path.exists('dingxiang_search_leg') 
+if not exist:
+    os.mkdir('dingxiang_search_leg')
+os.chdir('dingxiang_search_leg')
+
+for j in range(len(article_url)):
+    url = article_url[j]
+    title = re.sub(u"([^\u4e00-\u9fa5\u0030-\u0039\u0041-\u005a\u0061-\u007a])",
+                   "",article_title[j])+'.docx'
+    output = pypandoc.convert_file(url,'docx','html',outputfile=title) 
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+# \u4e00-\u9fa5   汉字的unicode范围
+# \u0030-\u0039   数字的unicode范围
+# \u0041-\u005a   大写字母unicode范围
+# \u0061-\u007a   小写字母unicode范围
+# \uAC00-\uD7AF   韩文的unicode范围
+# \u3040-\u31FF   日文的unicode范围
+</code></pre>
+                    </div>
+                </section>
+                <section>
+                    <h6>Multiple Pages</h6>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+num = 1
+pag=1
+article_url = []
+article_title = []
+while pag:
+    params_page={"page_index":str(num)}
+    r_all = requests.get(all_url,params=params_page,headers=headers)
+    soup_all = BeautifulSoup(r_all.content, 'lxml')
+    pag = soup_all.find_all(attrs={"class":"pagination"})
+    content_list = soup_all.find_all(attrs={"class":"article-title"})
+    for i in range(len(content_list)):
+        article_url.append(content_list[i]["href"])
+        article_title.append(content_list[i].contents[0].string)
+    num = num+1
+</code></pre>
+                    </div>
+                </section>
+
             </section>
             <section>
                 <section data-background="#2980b9" style="color: white">
-                    <h2 style="color: white">14.1 Recursion Examples</h2>
+                    <h2 style="color: white">14.2 Scraping with Selenium</h2>
+                </section>
+                                <section>
+                    <a href="https://book.douban.com/">豆瓣读书</a>
+                    <div class="fragment"><img data-src='dbds.jpg' style="height: 250pt"></div>
                 </section>
                 <section>
-                    <ul>
-                        <li>Example 1: The Greatest Common Divisor</li>
-                        <li>We have learned a method to do it.</li>
-                    </ul>
+                    <h5>Selenium</h5>
                     <div class="fragment">
                         <pre><code class="line-numbers" data-trim contenteditable>
-a = int(input('Enter your first number:'))
-b = int(input('Enter your first number:'))
-if a >= b:
-    x = a
-    y = b
-else:
-    x = b
-    y = a
-while y!=0:
-    r = y
-    y = x%y
-    x = r
-print(x)
-</code></pre>
-                    </div>
-                </section>
-                <section>
-                    <ul>
-                        <li>Let's do it with recursion.</li>
-                    </ul>
-                    <div class="fragment">
-                        <pre><code class="line-numbers" data-trim contenteditable>
-def gcd(a,b):
-    if b==0:
-        return a
-    elif a < b:
-        return gcd(b,a)
-    else:
-        return gcd(a-b, b)
-</code></pre>
-                    </div>
-                    <ul>
-                        <li class="fragment">We can make it simpler.</li>
-                    </ul>
-                    <div class="fragment">
-                        <pre><code class="line-numbers" data-trim contenteditable>
-def gcd(a,b):
-    if b==0:
-        return a
-    else:
-        return gcd(b, a % b)
-</code></pre>
-                    </div>
-                </section>
-                <section>
-                    <ul>
-                        <li>Example 2: Fibonacci Numbers</li>
-                        <li>The Fibonacci Sequence is the series of numbers:</li>
-                        <li>1, 1, 2, 3, 5, 8, 13, 21, 34, ...</li>
-                    </ul>
-                    <div class="fragment">
-                        <pre><code class="line-numbers" data-trim contenteditable>
-def fib(n)
-    if n==0 or n==1:
-        return 1
-    else:
-        return fib(n-1)+fib(n-2)
-</code></pre>
-                    </div>
-                </section>
-                <section>
-                    <ul>
-                        <li>Example 3: Full Permutation</li>
-                        <li>There is a simple way...</li>
-                    </ul>
-                    <div class="fragment">
-                        <pre><code class="line-numbers" data-trim contenteditable>
-import itertools
-for j in itertools.permutations([2,5,6]):
-    print(j)
-</code></pre>
-                    </div>
-                    <ul>
-                        <li class="fragment">Let's do it with recursion.</li>
-                    </ul>
-                    <div class="fragment">
-                        <pre><code class="line-numbers" data-trim contenteditable>
-def recursion_permutation(list, first, last):
-    if first >= last:  
-        print(list)
-    for i in range(first, last):  
-        list[i], list[first] = list[first], list[i]
-        recursion_permutation(list, first+1, last)
-        list[i], list[first] = list[first], list[i] 
+import requests
+from bs4 import BeautifulSoup
+from selenium import webdriver
+import re
+import os
 </code></pre>
                     </div>
                     <div class="fragment">
                         <pre><code class="line-numbers" data-trim contenteditable>
-x=[1,2,3,4]
-recursion_permutation(x,0,len(x))
+# 模拟浏览器搜索，获得html文件（更简单的方法）
+browser = webdriver.Chrome()
+browser.get("https://book.douban.com/")
+input=browser.find_element_by_id("inp-query")
+input.send_keys("Python")
+button=browser.find_element_by_class_name("inp-btn")
+button.click()
+page = browser.page_source
+browser.close()
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+# 解析html文件，获得书籍链接和名称
+soup=BeautifulSoup(page, 'lxml')
+list = soup.find_all(attrs={"class":"title-text"})
+url_list=[]
+title_list=[]
+for i in list:
+    url_list.append(i["href"])
+    title_list.append(i.string)
 </code></pre>
                     </div>
                 </section>
                 <section>
-                    <ul>
-                        <li>Example 4: Hanoi</li>
-                        <li class="fragment" style="font-size: 18pt">The Tower of Hanoi is a mathematical game or puzzle. It consists of three rods and a number of disks of different sizes, which can slide onto any rod. The puzzle starts with the disks in a neat stack in ascending order of size on one rod, the smallest at the top, thus making a conical shape.</li>
-                        <li class="fragment" style="font-size: 18pt">The objective of the puzzle is to move the entire stack to another rod, obeying the following simple rules:</li>
-                        <ul class="fragment" style="font-size: 18pt">
-                            <li>Only one disk can be moved at a time.</li>
-                            <li>Each move consists of taking the upper disk from one of the stacks and placing it on top of another stack or on an empty rod.</li>
-                            <li>No larger disk may be placed on top of a smaller disk.</li>
-                        </ul>
-                    </ul>
-                </section>
-                <section>
-                    <div class="fragment"><img data-src="hanoi.jpg" style="height: 200pt"></div>
-                    <div class="fragment"><img data-src="3Hanoi.gif" style="height: 180pt"></div>
-                </section>
-                <section>
-                    <div class="fragment"><img data-src="pole.png" style="height: 200pt"></div>
                     <div class="fragment">
                         <pre><code class="line-numbers" data-trim contenteditable>
-def moveTower(height, fromPole, toPole, withPole):
-    if height>=1:
-        moveTower(height-1,fromPole,withPole,toPole)
-        moveDisk(fromPole,toPole)
-        moveTower(height-1,withPole,toPole,fromPole)
+# 创建文件夹
+headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) \
+        AppleWebKit/537.36 (KHTML, like Gecko) \
+        Chrome/70.0.3538.25 \
+        Safari/537.36 Core/1.70.3823.400 QQBrowser/10.7.4307.400'}
+exist=os.path.exists('douban_search') 
+if not exist:
+    os.mkdir('douban_search')
+os.chdir('douban_search')
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+# 保存书籍封面
+i=-1; fig=0
+while not fig:
+    i=i+1
+    r=requests.get(url_list[i], headers=headers)
+    book=BeautifulSoup(r.content, 'lxml')
+    fig=book.find_all(attrs={"title":"点击看大图"})
 
-def moveDisk(fp,tp):
-    print("moving disk from %s to %s\n" %(fp,tp))
-</code></pre>
-                    </div>
-                </section>
-            </section>
-            <section>
-                <section data-background="#2980b9" style="color: white">
-                    <h2 style="color: white">14.2 Sorting Algorithms</h2>
-                </section>
-                <section>
-                    <ul style="font-size: 18pt">
-                        <li>Sorting is the process of placing elements from a collection in some kind of order. There are many, many sorting algorithms that have been developed and analyzed. This suggests
-                            that sorting is an important area of study in computer science.</li>
-                        <ul>
-                            <li>Bubble Sort</li>
-                            <li>Selection Sort</li>
-                            <li>Insertion Sort</li>
-                            <li>Merge Sort</li>
-                            <li>Quick Sort</li>
-                        </ul>
-                    </ul>
-                </section>
-                <section>
-                    <h6>1. Bubble sort</h6>
-                    <ul style="font-size: 18pt">
-                        <li class="fragment">The bubble sort makes multiple passes through a list. It compares adjacent items and exchanges those that are out of order. Each pass through the list places the next largest value in its proper place. In essence, each item “bubbles” up to the location where it belongs.</li>
-                        <li class="fragment">If there are $n$ items in the list, then there are $n$ − 1 pairs of items that need to be compared on the first pass. It is important to note that once the largest value in the list is part of a pair, it will continually be moved along until the pass is complete.</li>
-                        <li class="fragment">At the start of the second pass, the largest value is now in place. There are $n$ − 1 items left to sort, meaning that there will be $n$ − 2 pairs. Since each pass places the next largest value in place, the total number of passes necessary will be $n$ − 1. After completing the $n$ − 1 passes, the smallest item must be in the correct position with no further processing required.</li>
-                    </ul>
-                </section>
-                <section>
-                    <div class="fragment"><img data-src="bs1.png" style="height: 400pt"></div>
-                </section>
-                <section>
-                    <div class="fragment">
-                        <pre><code class="line-numbers" data-trim contenteditable data-noescape>
-def bubble_sort(a_list):
-    for pass_num in range(len(a_list) - 1, 0, -1):
-        for i in range(pass_num):
-            if a_list[i] > a_list[i + 1]:
-                temp = a_list[i]
-                a_list[i] = a_list[i + 1]
-                a_list[i + 1] = temp
-</code></pre>
-                    </div>
-                    <div class="fragment">
-                        <pre><code class="line-numbers" data-trim contenteditable data-noescape>              
-a_list = [54, 26, 93, 17, 77, 31, 44, 55, 20]
-bubble_sort(a_list)
-print(a_list)
+position_1=fig[0]['src'].find("s/")
+position_2=fig[0]['src'].find("/public")
+src = fig[0]['src'][:position_1]+"l"+fig[0]['src'][position_2:]
+fig_r=requests.get(src, headers=headers)
+fig_title = re.sub(u"([^\u4e00-\u9fa5\u0030-\u0039\u0041-\u005a\u0061-\u007a])",
+                        "",title_list[i])+".jpg"
+with open(fig_title, "wb") as f:
+    f.write(fig_r.content)
 </code></pre>
                     </div>
                 </section>
                 <section>
-                    <h6>2. Selection sort</h6>
-                    <ul style="font-size: 18pt">
-                        <li>The selection sort improves on the bubble sort by making only one exchange for every pass through the list.</li>
-                        <li>As with a bubble sort, after the first pass, the largest item is in the correct place. After the second pass, the next largest is in place. This process continues and requires $n$ − 1 passes to sort $n$ items, since the final item must be in place after the ($n$ − 1)st pass.</li>
-                    </ul>
-                </section>
-                <section>
-                    <ul>
-                        <li class="fragment">
-                            <p>Suppose you have a bunch of music on your computer. For each artist, you have a play count.</p>
-                        </li>
-                    </ul>
-                    <div class="fragment"><img data-src="15.png" style="height: 200pt"></div>
-                </section>
-                <section>
-                    <ul>
-                        <li class="fragment">
-                            <p>One way is to go through the list and find the most-played artist. Add that artist to a new list.</p>
-                        </li>
-                    </ul>
-                    <div class="fragment"><img data-src="16.png" style="height: 200pt"></div>
-                    <div class="fragment"><img data-src="17.png" style="height: 200pt"></div>
-                </section>
-                <section>
-                    <ul>
-                        <li class="fragment">
-                            <p>To find the artist with the highest play count, you have to check each item in the list. This takes $O(n)$ time, as you just saw. So you have an operation that takes $O(n)$ time, and you have to do that n times:</p>
-                        </li>
-                    </ul>
-                    <div class="fragment"><img data-src="18.png" style="height: 200pt"></div>
-                    <ul>
-                        <li class="fragment">
-                            <p>This takes $O(n × n)$ time or $O(n^2)$ time.</p>
-                        </li>
-                    </ul>
-                </section>
-                <section>
-                    <div class="fragment"><img data-src="ss1.png" style="height: 400pt"></div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>
+# 保存书籍简介
+intro = book.find_all(attrs={"class":"intro"})
+filename = re.sub(u"([^\u4e00-\u9fa5\u0030-\u0039\u0041-\u005a\u0061-\u007a])",
+                    "",title_list[i])+".txt"
+for j in intro:
+    with open(filename, 'a',encoding="utf-8") as file_object:
+        file_object.write(j.get_text())         
+</code></pre>
+                    </div>
+                    <div class="fragment">
+                        <pre><code class="line-numbers" data-trim contenteditable>       
+# 保存书籍目录
+position_3=url_list[i].find("subject/")
+position_4=url_list[i].find("/",position_3+1)
+position_5=url_list[i].find("/",position_4+1)
+bookid="dir_"+url_list[i][position_4+1:position_5]+"_full"
+dir=book.find_all(attrs={"id":bookid})
+if dir:
+    with open(filename, 'a',encoding="utf-8") as file_object:
+        file_object.write(dir[0].get_text())
+os.chdir('..') 
+</code></pre>
+                    </div>
                 </section>
                 <section>
                     <div class="fragment">
-                        <pre><code class="line-numbers" data-trim contenteditable data-noescape>
-def selection_sort(a_list):
-    for fill_slot in range(len(a_list) - 1, 0, -1):
-        pos_of_max = 0
-        for location in range(1, fill_slot + 1):
-            if a_list[location] > a_list[pos_of_max]:
-                pos_of_max = location
+                        <pre><code class="line-numbers" data-trim contenteditable data-noescape>       
+import time
+import random
 
-        temp = a_list[fill_slot]
-        a_list[fill_slot] = a_list[pos_of_max]
-        a_list[pos_of_max] = temp
+for i in range(len(url_list)):
+    r=requests.get(url_list[i], headers=headers)
+    <mark>time.sleep(random.random()*3)</mark>  
+    book=BeautifulSoup(r.content, 'lxml')
+    fig=book.find_all(attrs={"title":"点击看大图"})
 </code></pre>
                     </div>
-                </section>
-                <section>
-                    <h6>3. Insertion Sort</h6>
-                    <div class="fragment"><img data-src="is1.png" style="height: 400pt"></div>
-                </section>
-                <section>
-                    <div class="fragment"><img data-src="is2.png" style="height: 400pt"></div>
-                </section>
-                <section>
                     <div class="fragment">
                         <pre><code class="line-numbers" data-trim contenteditable data-noescape>
-def insertion_sort(a_list):
-    for index in range(1, len(a_list)):
-        current_value = a_list[index]
-        position = index
-        while position > 0 and a_list[position - 1] > current_value:
-            a_list[position] = a_list[position - 1]
-            position = position - 1
-        a_list[position] = current_value
-</code></pre>
-                    </div>
-                </section>
-            </section>
-            <section>
-                <section data-background="#2980b9" style="color: white">
-                    <h2 style="color: white">14.3 Sorting with Recursion</h2>
-                </section>
-                <section>
-                    <h6>4. Merge Sort</h6>
-                    <ul>
-                        <li>Splitting the List in a Merge Sort</li>
-                    </ul>
-                    <div class="fragment"><img data-src="ms1.png" style="height: 400pt"></div>
-                </section>
-                <section>
-                    <ul>
-                        <li>Merge Together</li>
-                    </ul>
-                    <div class="fragment"><img data-src="ms2.png" style="height: 400pt"></div>
-                </section>
-                <section>
-                    <ul>
-                        <li>Splitting the List in a Merge Sort</li>
-                    </ul>
-                    <div class="fragment">
-                        <pre><code class="line-numbers" data-trim contenteditable data-noescape>
-def merge_sort(a_list):
-    print("Splitting ", a_list)
-    if len(a_list) > 1:
-        mid = len(a_list) // 2
-        left_half = a_list[:mid]
-        right_half = a_list[mid:]
-
-        merge_sort(left_half)
-        merge_sort(right_half)
-        i = 0
-        j = 0
-        k = 0
-</code></pre>
-                    </div>
-                </section>
-                <section>
-                    <ul>
-                        <li>Merge Together</li>
-                    </ul>
-                    <div class="fragment">
-                        <pre><code class="line-numbers" data-trim contenteditable data-noescape>
-#continue
-        while i < len(left_half) and j < len(right_half):
-            if left_half[i] < right_half[j]:
-                a_list[k] = left_half[i]
-                i = i + 1
-            else:
-                a_list[k] = right_half[j]
-                j = j + 1
-            k = k + 1
-
-        while i < len(left_half):
-            a_list[k] = left_half[i]
-            i = i + 1
-            k = k + 1
-
-        while j < len(right_half):
-            a_list[k] = right_half[j]
-            j = j + 1
-            k = k + 1
-    print("Merging ", a_list)
-</code></pre>
-                    </div>
-                </section>
-                <section>
-                    <ul style="font-size: 18pt">
-                        <li>In order to analyze the merge_sort function, we need to consider the two distinct processes that make up its implementation.</li>
-                        <li>The result of this analysis is that log $n$ splits, each of which costs $n$ for a total of $n$ log $n$ operations. A merge sort is an $O(n log n)$ algorithm.</li>
-                    </ul>
-                </section>
-                <section>
-                    <h6>5. Quick Sort</h6>
-                    <ul>
-                        <li class="fragment">
-                            <p>Base case</p>
-                        </li>
-                    </ul>
-                    <div class="fragment"><img data-src="19.png" style="height: 150pt"></div>
-                    <ul>
-                        <li class="fragment">
-                            <p>An array with two elements is pretty easy to sort, too.</p>
-                        </li>
-                    </ul>
-                    <div class="fragment"><img data-src="20.png" style="height: 120pt"></div>
-                </section>
-                <section>
-                    <ul>
-                        <li class="fragment">
-                            <p style="font-size: 18pt">What about an array of three elements?</p>
-                            <div class="fragment"><img data-src="21.png" style="height: 30pt"></div>
-                        </li>
-                        <li class="fragment">
-                            <p style="font-size: 18pt">We use D&C to solve this problem. Let's pick a <b>pivot</b> at first, say, 33.</p>
-                        </li>
-                    </ul>
-                    <div class="fragment"><img data-src="22.png" style="height: 100pt"></div>
-                    <ul>
-                        <li class="fragment">
-                            <p style="font-size: 18pt">This is called partitioning. Now you have:</p>
-                            <p style="font-size: 18pt">A sub-array of all the numbers less than the pivot</p>
-                            <p style="font-size: 18pt">The pivot</p>
-                            <p style="font-size: 18pt">A sub-array of all the numbers greater than the pivot</p>
-                        </li>
-                    </ul>
-                </section>
-                <section>
-                    <ul>
-                        <li class="fragment">
-                            <p>If the sub-arrays are sorted, then you can combine the whole thing like this—<b>left array + pivot + right array</b>—and you get a sorted array.
-                            </p>
-                        </li>
-                        <li class="fragment">
-                            <p>Suppose you have this array of five elements.
-                            </p>
-                            <div class="fragment"><img data-src="23.png" style="height: 60pt"></div>
-                        </li>
-                        <li class="fragment">
-                            <p>For example, suppose you pick 3 as the pivot. You call quicksort on the sub-arrays.
-                            </p>
-                            <div class="fragment"><img data-src="24.png" style="height: 200pt"></div>
-                        </li>
-                    </ul>
-                </section>
-                <section>
-                    <div class="fragment"><img data-src="qs1.png" style="height: 400pt"></div>
-                </section>
-                <section>
-                    <div class="fragment"><img data-src="qs2.png" style="height: 400pt"></div>
-                </section>
-                <section>
-                    <div class="fragment"><img data-src="qs3.png" style="height: 200pt"></div>
-                    <div class="fragment">
-                        <pre><code class="line-numbers" data-trim contenteditable data-noescape>
-def quick_sort(a_list):
-    quick_sort_helper(a_list, 0, len(a_list) - 1)
-def quick_sort_helper(a_list, first, last):
-    if first < last:
-        split_point = partition(a_list, first, last)
-        quick_sort_helper(a_list, first, split_point - 1)
-        quick_sort_helper(a_list, split_point + 1, last)
+# 这段从属于上面的For循环，需要整体缩进一次       
+if fig:
+    position_1=fig[0]['src'].find("s/")
+    position_2=fig[0]['src'].find("/public")
+    src = fig[0]['src'][:position_1]+"l"+fig[0]['src'][position_2:]
+    fig_r=requests.get(src, headers=headers)
+    #time.sleep(random.random()*3)
+    fig_title = re.sub(u"([^\u4e00-\u9fa5\u0030-\u0039\u0041-\u005a\u0061-\u007a])",
+                       "",title_list[i])+".jpg"
+    with open(fig_title, "wb") as f:
+        f.write(fig_r.content)
+    intro = book.find_all(attrs={"class":"intro"})
+    filename = re.sub(u"([^\u4e00-\u9fa5\u0030-\u0039\u0041-\u005a\u0061-\u007a])",
+                           "",title_list[i])+".txt"
 </code></pre>
                     </div>
                 </section>
                 <section>
                     <div class="fragment">
                         <pre><code class="line-numbers" data-trim contenteditable data-noescape>
-#continue
-def partition(a_list, first, last):
-    pivot_value = a_list[first]
-    left_mark = first + 1
-    right_mark = last
-    done = False
-    while not done:
-        while left_mark <= right_mark and a_list[left_mark] <= pivot_value:
-            left_mark = left_mark + 1
-
-        while left_mark <= right_mark and a_list[right_mark] >= pivot_value:
-            right_mark = right_mark - 1
-            </code></pre>
-                    </div>
-                    <div class="fragment">
-                        <pre><code class="line-numbers" data-trim contenteditable data-noescape>
-#continue
-        if right_mark < left_mark:
-            done = True
-        else:
-            temp = a_list[left_mark]
-            a_list[left_mark] = a_list[right_mark]
-            a_list[right_mark] = temp
-
-    temp = a_list[first]
-    a_list[first] = a_list[right_mark]
-    a_list[right_mark] = temp
-
-    return right_mark
+# 这段从属于上面的if条件判断，需要整体缩进两次       
+for j in intro:
+    with open(filename, 'a',encoding="utf-8") as file_object:
+        file_object.write(j.get_text())        
+position_3=url_list[i].find("subject/")
+position_4=url_list[i].find("/",position_3+1)
+position_5=url_list[i].find("/",position_4+1)
+bookid="dir_"+url_list[i][position_4+1:position_5]+"_full"
+dir=book.find_all(attrs={"id":bookid})
+if dir:
+    with open(filename, 'a',encoding="utf-8") as file_object:
+        file_object.write(dir[0].get_text())
 </code></pre>
                     </div>
                                         <div class="fragment">
                         <pre><code class="line-numbers" data-trim contenteditable data-noescape>
-a_list=[54, 26, 93, 17, 77, 31, 44, 55, 20]
-quick_sort(a_list)
-print(a_list)
+os.chdir('..')
 </code></pre>
                     </div>
                 </section>
-                <section>
-                    <ul>
-                        <li class="fragment">
-                            <p>Quicksort is unique because its speed depends on the pivot you choose.</p>
-                        </li>
-                    </ul>
-                    <div class="fragment"><img data-src="25.png" style="height: 300pt"></div>
+                <section data-background-image="bg.png">
+                    <div class="div-c">
+                        <h5>一些反爬策略</h5>
+                        <ul>
+                            <li>通过User-Agent来控制访问</li>
+                            <li>IP限制 (IP池，延时模拟人工)</li>
+                            <li>SESSION访问限制</li>
+                            <li>蜘蛛陷阱</li>
+                        </ul>
+                    </div>
+                    <div class="div-d">
+                        <ul>
+                            <li>验证码验证</li>
+                            <li>通过robots.txt来限制爬虫</li>
+                            <li>数据动态加载</li>
+                            <li>数据加密-使用加密算法</li>
+                        </ul>
+                    </div>
                 </section>
-                <section>
-                    <ul>
-                        <li class="fragment">
-                            <p>Actually, the big O of the quick sort algorithm depends on the pivot you pick.</p>
-                        </li>
-                        <li class="fragment">
-                            <p>In the best case, the big O of quick sort is $O(nlogn)$. However, in the worst case, the big O of it turns to be $O(n^2)$.</p>
-                        </li>
-                        <li class="fragment">
-                            <p>Why?</p>
-                        </li>
-                    </ul>
                 </section>
-                <section>
-                    <ul>
-                        <li class="fragment">
-                            <p>Worst Case</p>
-                        </li>
-                    </ul>
-                    <div class="fragment"><img data-src="26.png" style="height: 400pt"></div>
-                </section>
-                <section>
-                    <ul>
-                        <li class="fragment">
-                            <p>Best Case</p>
-                        </li>
-                    </ul>
-                    <div class="fragment"><img data-src="27.png" style="height: 300pt"></div>
-                    <ul>
-                        <li class="fragment">
-                            <p>The average case is the best case, if you pick pivot randomly.</p>
-                        </li>
-                    </ul>
-                </section>
-                <section>
-                    <ul style="font-size: 18pt">
-                        <li>A variant of the Insertion Sort: Shell Sort</li>
-                        <li>The sorting algorithm in Python: Timsort</li>
-                        <li>Timsort is a hybrid stable sorting algorithm, derived from merge sort and insertion sort, designed to perform well on many kinds of real-world data.</li>
-                    </ul>
-                </section>
-            </section>
             <section>
-                <section data-background="#2980b9" style="color: white">
-                    <h2 style="color: white">14.4 The Knapsack Problem</h2>
-                </section>
-                <section>
-                    <ul>
-                        <li>Suppose you're a greedy thief. You're in a store with a knapsack, and there are all these items you can steal. But you can only take what you can fit in your knapsack. The knapsack can hold 35 pounds.</li>
-                        <li>You're trying to maximize the value of the items you put in your knapsack. What algorithm do you use?</li>
-                    </ul>
-                    <div class="fragment"><img data-src="ks1.png" style="height: 200pt"></div>
-                </section>
-                <section>
-                    <h6>Greedy Algorithm</h6>
-                     <ul>
-                        <li>A greedy algorithm is a simple, intuitive algorithm that is used in optimization problems. The algorithm makes the optimal choice at each step as it attempts to find the overall optimal way to solve the entire problem.</li>
-                    </ul>
-                </section>
-            </section>
-            <section>
+             
                 <section data-background="#2c3e50" style="color: white; text-align: left;">
                     <h2 style="color: white">Summary</h2>
                     <ul>
-                        <li>Recursion Examples</li>
-                        <li>Sorting</li>
-                        <li>Sorting with Recursion</li>
+                        <li>Python 3 网络爬虫开发实战</li>
+
                     </ul>
+                    
                 </section>
             </section>
         </div>
